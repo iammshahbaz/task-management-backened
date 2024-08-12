@@ -30,7 +30,7 @@ const createTask = async (req, res) => {
 
     } catch (error) {
         console.log(`error,${error}`)
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -139,5 +139,41 @@ const updateTaskProgress = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+const updateTask = async (req, res) => {
+    const { id } = req.params;
+    const userRole = req.user.role;
 
-module.exports = { createTask, acceptTask, rejectTask, updateTaskProgress, getTask }
+    if (userRole !== 'Admin') {
+        return res.status(403).send({ error: 'You do not have permission to update tasks.' });
+    }
+    try {
+        const task = await TaskModule.findByIdAndUpdate(id, req.body, { new: true });
+
+        if (!task) {
+            return res.status(404).send({ error: 'Task not found' });
+        }
+        res.send(task);
+
+    } catch (error) {
+        res.status(400).send({ error: error.message });
+    }
+}
+
+//delete 
+const deleteTask = async (req, res) => {
+    const { id } = req.params;
+    const userRole = req.user.role;
+
+    if (userRole !== 'Admin') {
+        return res.status(403).send({ error: 'You do not have permission to delete tasks.' });
+    }
+    try {
+        const task = await TaskModule.findByIdAndDelete(id);
+        if (!task) return res.status(404).send({ error: 'Task not found' });
+        res.send({ msg: 'Task deleted successfully' });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
+    }
+}
+
+module.exports = { createTask, acceptTask, rejectTask, updateTaskProgress, getTask ,updateTask ,deleteTask }
